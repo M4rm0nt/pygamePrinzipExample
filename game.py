@@ -1,105 +1,133 @@
-import pygame  # Importiere die pygame-Bibliothek für die Spieleentwicklung
-import sys  # Importiere das sys-Modul für systembezogene Funktionalitäten
+import pygame
+import sys
 
-pygame.init()  # Initialisiere Pygame
+pygame.init()
 
-BREITE, HÖHE = 800, 600  # Definiere die Breite und Höhe des Spielfensters
+BREITE, HÖHE = 800, 600
 
-WEISS = (255, 255, 255)  # Definiere die Farbe Weiß in RGB-Format
-SCHWARZ = (0, 0, 0)  # Definiere die Farbe Schwarz in RGB-Format
-GRÜN = (0, 255, 0)  # Definiere die Farbe Grün in RGB-Format
-ROT = (255, 0, 0)  # Definiere die Farbe Rot in RGB-Format
+WEISS = (255, 255, 255)
+SCHWARZ = (0, 0, 0)
+GRÜN = (0, 255, 0)
+ROT = (255, 0, 0)
 
-bildschirm = pygame.display.set_mode((BREITE, HÖHE))  # Erstelle das Spielfenster mit der definierten Breite und Höhe
-pygame.display.set_caption("Rechtecksteuerung")  # Setze den Titel des Fensters auf "Rechtecksteuerung"
+bildschirm = pygame.display.set_mode((BREITE, HÖHE))
+pygame.display.set_caption("Rechtecksteuerung")
 
-spieler_größe = 50  # Größe des Spielers (Länge und Breite des Rechtecks)
-spieler_x = BREITE // 2 - spieler_größe // 2  # X-Position des Spielers, zentriert im Fenster
-spieler_y = HÖHE // 2 - spieler_größe // 2  # Y-Position des Spielers, zentriert im Fenster
-spieler_geschwindigkeit = 5  # Geschwindigkeit, mit der sich der Spieler bewegt
+spieler_größe = 50
+spieler_x = BREITE // 2 - spieler_größe // 2
+spieler_y = HÖHE // 2 - spieler_größe // 2
+spieler_geschwindigkeit = 5
+spieler_energie = 100
+spieler_gesammelte_objekte = 0
 
-spieler_energie = 100  # Startenergie des Spielers
+energielieferant_x = BREITE - 50
+energielieferant_y = HÖHE - 50
+energielieferant_größe = 30
 
-energielieferant_x = BREITE - 50  # X-Position des Energielieferanten, rechts im Fenster
-energielieferant_y = HÖHE - 50  # Y-Position des Energielieferanten, unten im Fenster
-energielieferant_größe = 30  # Größe des Energielieferanten (Länge und Breite des Rechtecks)
+sammelObjekt_x = BREITE - 200
+sammelObjekt_y = HÖHE - 200
+sammelObjekt_größe = 30
 
-uhr = pygame.time.Clock()  # Uhr zur Steuerung der Framerate des Spiels
+ablagePlatz_x = 100
+ablagePlatz_y = 100
+ablagePlatz_größe = 30
+abgelegte_objekte = []
 
-läuft = True  # Variable, um das Spiel zu steuern, Initialisierung auf True, um das Spiel zu starten
-while läuft:  # Starte die Hauptschleife des Spiels
-    for ereignis in pygame.event.get():  # Iteriere durch alle Ereignisse in der Ereigniswarteschlange
-        if ereignis.type == pygame.QUIT:  # Wenn das Schließen-Ereignis ausgelöst wurde
-            läuft = False  # Setze die Variable auf False, um die Hauptschleife zu beenden und das Spiel zu beenden
+uhr = pygame.time.Clock()
 
-    # Spielerbewegung basierend auf Benutzereingaben
-    tasten = pygame.key.get_pressed()  # Überprüfe, welche Tasten gedrückt sind
-    if tasten[pygame.K_LEFT] and spieler_energie > 0:  # Wenn die linke Pfeiltaste gedrückt wird und die Spielerenergie > 0 ist
-        spieler_x -= spieler_geschwindigkeit  # Verringere die X-Position des Spielers, um ihn nach links zu bewegen
-        spieler_energie -= 0.15  # Verringere die Spielerenergie aufgrund der Bewegung
-    if tasten[pygame.K_RIGHT] and spieler_energie > 0:  # Wenn die rechte Pfeiltaste gedrückt wird und die Spielerenergie > 0 ist
-        spieler_x += spieler_geschwindigkeit  # Erhöhe die X-Position des Spielers, um ihn nach rechts zu bewegen
-        spieler_energie -= 0.15  # Verringere die Spielerenergie aufgrund der Bewegung
-    if tasten[pygame.K_UP] and spieler_energie > 0:  # Wenn die obere Pfeiltaste gedrückt wird und die Spielerenergie > 0 ist
-        spieler_y -= spieler_geschwindigkeit  # Verringere die Y-Position des Spielers, um ihn nach oben zu bewegen
-        spieler_energie -= 0.15  # Verringere die Spielerenergie aufgrund der Bewegung
-    if tasten[pygame.K_DOWN] and spieler_energie > 0:  # Wenn die untere Pfeiltaste gedrückt wird und die Spielerenergie > 0 ist
-        spieler_y += spieler_geschwindigkeit  # Erhöhe die Y-Position des Spielers, um ihn nach unten zu bewegen
-        spieler_energie -= 0.15  # Verringere die Spielerenergie aufgrund der Bewegung
+läuft = True
+while läuft:
+    for ereignis in pygame.event.get():
+        if ereignis.type == pygame.QUIT:
+            läuft = False
 
-    # Begrenze die Position des Spielers innerhalb des Spielfensters
-    spieler_x = max(0, min(spieler_x, BREITE - spieler_größe))  # Begrenze die X-Position des Spielers
-    spieler_y = max(0, min(spieler_y, HÖHE - spieler_größe))  # Begrenze die Y-Position des Spielers
+    tasten = pygame.key.get_pressed()
+    if tasten[pygame.K_LEFT] and spieler_energie > 0 and len(abgelegte_objekte) != 5:
+        spieler_x -= spieler_geschwindigkeit
+        spieler_energie -= 0.15
+    if tasten[pygame.K_RIGHT] and spieler_energie > 0 and len(abgelegte_objekte) != 5:
+        spieler_x += spieler_geschwindigkeit
+        spieler_energie -= 0.15
+    if tasten[pygame.K_UP] and spieler_energie > 0 and len(abgelegte_objekte) != 5:
+        spieler_y -= spieler_geschwindigkeit
+        spieler_energie -= 0.15
+    if tasten[pygame.K_DOWN] and spieler_energie > 0 and len(abgelegte_objekte) != 5:
+        spieler_y += spieler_geschwindigkeit
+        spieler_energie -= 0.15
 
-    # Überprüfe Kollision des Spielers mit dem Energielieferanten
-    spieler_rechteck = pygame.Rect(spieler_x, spieler_y, spieler_größe, spieler_größe)  # Erstelle ein Rechteck für den Spieler
-    energielieferant_rechteck = pygame.Rect(energielieferant_x, energielieferant_y, energielieferant_größe, energielieferant_größe)  # Erstelle ein Rechteck für den Energielieferanten
-    if spieler_rechteck.colliderect(energielieferant_rechteck):  # Wenn der Spieler mit dem Energielieferanten kollidiert
-        spieler_energie = 100  # Setze die Spielerenergie zurück auf 100
-        # Platziere den Energielieferanten neu im Spielfenster
+    spieler_x = max(0, min(spieler_x, BREITE - spieler_größe))
+    spieler_y = max(0, min(spieler_y, HÖHE - spieler_größe))
+
+    spieler_rechteck = pygame.Rect(spieler_x, spieler_y, spieler_größe, spieler_größe)
+    energielieferant_rechteck = pygame.Rect(energielieferant_x, energielieferant_y, energielieferant_größe, energielieferant_größe)
+    sammelObjekt_rechteck = pygame.Rect(sammelObjekt_x, sammelObjekt_y, sammelObjekt_größe, sammelObjekt_größe)
+    ablageplatz_rechteck = pygame.Rect(ablagePlatz_x, ablagePlatz_y, ablagePlatz_größe, ablagePlatz_größe)
+
+    if spieler_rechteck.colliderect(energielieferant_rechteck):
+        spieler_energie = 100
         energielieferant_x = BREITE - 50
         energielieferant_y = HÖHE - 50
 
-    # Begrenze die Spielerenergie zwischen 0 und 100
-    spieler_energie = max(0, min(spieler_energie, 100))  # Stelle sicher, dass die Spielerenergie zwischen 0 und 100 liegt
+    spieler_energie = max(0, min(spieler_energie, 100))
 
-    # Zeichne den Hintergrund des Spiels
+    if spieler_rechteck.colliderect(sammelObjekt_rechteck) and spieler_gesammelte_objekte < 5:
+        spieler_gesammelte_objekte = 1
+        sammelObjekt_x = 100
+        sammelObjekt_y = 100
+
+    if spieler_rechteck.colliderect(ablageplatz_rechteck) and spieler_gesammelte_objekte > 0 and len(abgelegte_objekte) < 5:
+        abgelegte_objekte.append((ablagePlatz_x, ablagePlatz_y))
+        spieler_gesammelte_objekte -= 1
+        sammelObjekt_x = BREITE - 200
+        sammelObjekt_y = HÖHE - 200
+
     bildschirm.fill(WEISS)
 
-    # Zeichne das Rechteck des Spielers
     pygame.draw.rect(bildschirm, SCHWARZ, (spieler_x, spieler_y, spieler_größe, spieler_größe))
-
-    # Zeichne das Rechteck des Energielieferanten
     pygame.draw.rect(bildschirm, ROT, (energielieferant_x, energielieferant_y, energielieferant_größe, energielieferant_größe))
+    pygame.draw.rect(bildschirm, GRÜN, (sammelObjekt_x, sammelObjekt_y, sammelObjekt_größe, sammelObjekt_größe))
+    pygame.draw.rect(bildschirm, SCHWARZ, (ablagePlatz_x, ablagePlatz_y, ablagePlatz_größe, ablagePlatz_größe))
 
-    # Zeichne den Energiebalken des Spielers
-    energie_balken_breite = spieler_energie * spieler_größe / 100  # Berechne die Breite des Energiebalkens basierend auf der Spielerenergie
-    energie_balken = pygame.Rect(spieler_x, spieler_y - 10, energie_balken_breite, 5)  # Erstelle ein Rechteck für den Energiebalken
-    pygame.draw.rect(bildschirm, GRÜN, energie_balken)  # Zeichne den Energiebalken in Grün
+    energie_balken_breite = spieler_energie * spieler_größe / 100
+    energie_balken = pygame.Rect(spieler_x, spieler_y - 10, energie_balken_breite, 5)
+    pygame.draw.rect(bildschirm, GRÜN, energie_balken)
 
-    # Zeige die aktuelle Spielerenergie an
-    schrift = pygame.font.SysFont(None, 24)  # Definiere eine Schriftart für den Text
-    energie_text = schrift.render(f'Energie: {spieler_energie:.2f}', True, SCHWARZ)  # Erstelle einen Text für die Spielerenergie
-    bildschirm.blit(energie_text, (10, 10))  # Zeige den Text in der oberen linken Ecke des Spielfensters an
+    schrift = pygame.font.SysFont(None, 24)
 
-    # Überprüfe, ob die Spielerenergie erschöpft ist und zeige eine Nachricht an
-    if spieler_energie <= 0:  # Wenn die Spielerenergie kleiner oder gleich 0 ist
-        nachricht_schrift = pygame.font.SysFont(None, 24)  # Definiere eine Schriftart für die Nachricht
-        nachricht_text = nachricht_schrift.render("Deine Energie ist leer, drücke E um sie wieder aufzuladen", True, SCHWARZ)  # Erstelle einen Text für die Nachricht
-        bildschirm.blit(nachricht_text, (BREITE // 2 - 200, HÖHE // 2))  # Zeige die Nachricht in der Mitte des Spielfensters an
+    energie_text = schrift.render(f'Energie: {spieler_energie:.2f}', True, SCHWARZ)
+    bildschirm.blit(energie_text, (10, 10))
 
-    # Wenn die Spielerenergie <= 0 ist
+    objekte_text = schrift.render(f'Objekte: {spieler_gesammelte_objekte}', True, SCHWARZ)
+    bildschirm.blit(objekte_text, (10, 30))
+
+    abgelegte_objekte_text = schrift.render(f'Abgelegte Objekte: {len(abgelegte_objekte)}/5', True, SCHWARZ)
+    bildschirm.blit(abgelegte_objekte_text, (10, 50))
+
     if spieler_energie <= 0:
-        # Überprüfe, ob die E-Taste gedrückt wird, um die Energie wieder aufzuladen
+        nachricht_schrift = pygame.font.SysFont(None, 24)
+        nachricht_text = nachricht_schrift.render("Deine Energie ist leer, drücke E um sie wieder aufzuladen", True, SCHWARZ)
+        bildschirm.blit(nachricht_text, (BREITE // 2 - 200, HÖHE // 2))
+
+    if spieler_energie <= 0:
         if tasten[pygame.K_e]:
-            spieler_energie = 100  # Setze die Spielerenergie zurück auf 100
+            spieler_energie = 100
 
-    # Aktualisiere das Spielfenster
-    pygame.display.flip()  # Aktualisiere den Bildschirm, um die Änderungen anzuzeigen
+    if len(abgelegte_objekte) == 5:
+        nachricht_schrift = pygame.font.SysFont(None, 24)
+        nachricht_text = nachricht_schrift.render("Glückwunsch, du hast alle Objekte abgelegt! R für restart", True, SCHWARZ)
+        bildschirm.blit(nachricht_text, (BREITE // 2 - 200, HÖHE // 2))
 
-    # Kontrolliere die Framerate des Spiels
-    uhr.tick(60)  # Begrenze die Framerate auf maximal 60 Frames pro Sekunde
+    if len(abgelegte_objekte) == 5:
+        if tasten[pygame.K_r]:
+            spieler_x = BREITE // 2 - spieler_größe // 2
+            spieler_y = HÖHE // 2 - spieler_größe // 2
+            spieler_energie = 100
+            spieler_gesammelte_objekte = 0
+            abgelegte_objekte = []
 
-# Beende Pygame
-pygame.quit()  # Beende die Pygame-Bibliothek
-sys.exit()  # Beende das Python-Skript
+    pygame.display.flip()
+
+    uhr.tick(60)
+
+pygame.quit()
+sys.exit()
